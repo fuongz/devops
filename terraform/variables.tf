@@ -39,10 +39,12 @@ variable "private_subnets_cidr" {
 
 variable "modules" {
   type = object({
-    ec2: bool
+    ec2 = bool
+    fargate = bool
   })
   default = {
-    ec2: true
+    ec2 = true
+    fargate = false
   }
   description = "List modules"
 }
