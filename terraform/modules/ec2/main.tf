@@ -1,9 +1,55 @@
 # EC2
 
+# Local
+locals {
+  http_ports = [
+    {
+      from_port = 80
+      to_port = 80
+      protocol = "tcp"
+      cidr_blocks = ["0.0.0.0/0"]
+    },
+    {
+      from_port = 443
+      to_port = 443
+      protocol = "tcp"
+      cidr_blocks = ["0.0.0.0/0"]
+    }
+  ]
+}
+
 # Security Group
 # - Allow SSH via port 22
 
 # Public Group
+resource "aws_security_group" "public_allow_http" {
+  name = "${var.environment}-allow-http-public"
+  description = "Allow HTTP inbound traffic"
+  vpc_id = var.vpc.id
+
+  dynamic ingress {
+    for_each = local.http_ports
+    content {
+      description = "HTTP from the internet"
+      from_port = ingress.value["from_port"]
+      to_port = ingress.value["to_port"]
+      protocol = ingress.value["protocol"]
+      cidr_blocks = ingress.value["cidr_blocks"]
+    }
+  }
+
+  egress {
+    from_port = 0
+    to_port = 0
+    protocol = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "${var.environment}-allow-http-public"
+  }
+}
+
 resource "aws_security_group" "public_allow_ssh" {
   name = "${var.environment}-allow-ssh-public"
   description = "Allow SSH inbound traffic"
@@ -37,7 +83,7 @@ resource "aws_instance" "ec2" {
   associate_public_ip_address = true
   key_name = var.key_name
   subnet_id = var.public_subnet[0].id
-  vpc_security_group_ids = [aws_security_group.public_allow_ssh.id]
+  vpc_security_group_ids = [aws_security_group.public_allow_ssh.id, aws_security_group.public_allow_http.id]
 
   tags = {
     Name = "${var.environment}-ec2-public"
