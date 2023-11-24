@@ -36,3 +36,27 @@ variable "private_subnets_cidr" {
   default     = ["10.0.16.0/20", "10.0.144.0/20"]
   description = "CIDR block for Private Subnet"
 }
+
+variable "modules" {
+  type = object({
+    ec2: bool
+  })
+  default = {
+    ec2: true
+  }
+  description = "List modules"
+}
+
+variable "services" {
+  type = object({
+    networking = object({
+      nat = bool
+    })
+  })
+  default = {
+    networking = {
+      nat: false
+    }
+  }
+  description = "List services"
+}

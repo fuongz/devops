@@ -31,3 +31,13 @@ variable "private_subnets_cidr" {
   default     = ["10.0.16.0/20", "10.0.144.0/20"]
   description = "CIDR block for Private Subnet"
 }
+
+variable "services" {
+  type = object({
+    nat = bool
+  })
+  default = {
+    nat = false
+  }
+  description = "List status of services"
+}

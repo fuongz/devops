@@ -93,24 +93,27 @@ resource "aws_route_table_association" "private" {
 
 # NAT
 # VPC > NAT: Elastic IPs
-# resource "aws_eip" "nat_eip" {
-#   domain = "vpc"
-#   depends_on = [ aws_internet_gateway.ig ]
-# }
+resource "aws_eip" "nat_eip" {
+  count = var.services["nat"] == true ? 1 : 0
+  domain = "vpc"
+  depends_on = [ aws_internet_gateway.ig ]
+}
 
 # VPC > NAT
-# resource "aws_nat_gateway" "nat" {
-#   allocation_id = aws_eip.nat_eip.id
-#   subnet_id = element(aws_subnet.public_subnet.*.id, 0)
+resource "aws_nat_gateway" "nat" {
+  count = length(aws_eip.nat_eip) > 0 ? 1 : 0
+  allocation_id = aws_eip.nat_eip[0].id
+  subnet_id = element(aws_subnet.public_subnet.*.id, 0)
   
-#   tags = {
-#     Name: "nat-gateway-${var.environment}"
-#     Environment: "${var.environment}"
-#   }
-# }
+  tags = {
+    Name: "nat-gateway-${var.environment}"
+    Environment: "${var.environment}"
+  }
+}
 # Route for NAT
-# resource "aws_route" "private_internet_gateway" {
-#   route_table_id = aws_route_table.private.id
-#   destination_cidr_block = "0.0.0.0/0"
-#   gateway_id = aws_nat_gateway.nat.id
-# }
+resource "aws_route" "private_internet_gateway" {
+  count = length(aws_nat_gateway.nat) > 0 && aws_route_table.private != null ? 1 : 0
+  route_table_id = aws_route_table.private.id
+  destination_cidr_block = "0.0.0.0/0"
+  gateway_id = aws_nat_gateway.nat[0].id
+}
